@@ -1,0 +1,4 @@
+set confirm off
+set architecture arm64
+file <sym-file>
+target remote localhost:2333
