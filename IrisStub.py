@@ -3,8 +3,8 @@ current_thread = 0
 
 def HandleStopReply():
     '''?'''
-    return "N"
+    return "S05"
 
 def HandleIfAttached():
     '''qAttached'''
-    return "1"
+    return "0"
