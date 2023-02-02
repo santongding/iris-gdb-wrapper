@@ -1,4 +1,4 @@
 set confirm off
-set architecture arm64
-file <sym-file>
+set architecture aarch64
+symbol-file <sym-file> -o <offset>
 target remote localhost:2333

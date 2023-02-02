@@ -1,7 +1,9 @@
 .PHONY: .gdbinit
 export sym_file_path
-export fvp_cmd
+export exec_address
+export iris_port
 run:.gdbinit
 .gdbinit:.gdbinit.tmp
 
-	sed "s/<sym-file>/$(sym_file_path)/" < $^ > $@
+	sed "s/<sym-file>/$(sym_file_path)/" < $^ | \
+	sed "s/<offset>/$(exec_address)/" > $@
