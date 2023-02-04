@@ -2,60 +2,41 @@ import socket
 import traceback
 import sys
 import RspDeafultHandlers
-def decodeArgs(str:str):
-    if str.endswith("+"):
-        return {str[0:-1]:True}
-    if str.endswith("-"):
-        return {str[0:-1]:False}
-    if "=" in str:
-        v = str.split("=")
-        return {v[0]:v[1]}
-    raise Exception(f"unkown args format:{str}")
-def encodeArgs(k, v):
-    if v == True:
-        return k + "+"
-    if v == False:
-        return k + "-"
-    if v is not None:
-        return k + "=" + str(v)
-    return k
+import re
+
+
 def calcChecksum(data):
     return "{:02x}".format(sum(ord(c) for c in data) & 0xff)
-def encode(dic):
-    if type(dic) != dict:
-        ret = str(dic)
-    else:
-        ret =  ";".join([encodeArgs(k,v) for k,v in dic.items()])
+def encode(data):
+    ret = str(data)
     ret = str.encode("+$" + ret + "#" + str(calcChecksum(ret)))
     print(f"sending:{ret}")
     return ret
-    pass
+
 def decode(bytes):
     if not bytes:
-        return None
+        raise "not recv data"
     print(f"raw data:{bytes}")
     data = bytes.decode('utf-8')
-    data = data.split("$")[1]
-    checksum = data.split("#")[-1]
-    data = data.split("#")[0]
+    m = re.compile("^\+?\$([a-zA-Z?])([a-zA-Z]*)([^#]*)#([0-9a-zA-Z]{2})$").match(data)
     
+    if not m:
+        raise("fail to run re.")
 
-    calchecksum =  calcChecksum(data)
+    firestType = m[1]
+    secondType = m[2]
+    args = m[3]
+    print(f"fi type: {firestType}, se type: {secondType} args: {args}")
+    
+    checksum = m[4]
+   
+    calchecksum =  calcChecksum(firestType + secondType + args)
     if checksum != calchecksum:
         print(data)
         print(checksum, calchecksum)
         raise Exception("fail to check checksum")
     
-    t = data.split(":")[0]
-    data = "".join(data.split(":")[1:])
-    args = {}
-    if len(data) > 0:
-        data = data.split(";")
-        for x in data:
-            args.update(decodeArgs(x))
-
-    return [t, args]
-    # data = data.split("")
+    return firestType, secondType, args
 
 class RspServer:
     def __init__(self, port) -> None:
@@ -71,25 +52,33 @@ class RspServer:
             if v.startswith("Handle"):
                 func = getattr(module, v)
                 if callable(func) and func.__doc__:
-                    self.updHandler(func.__doc__, func)
-    def updHandler(self, key:str, func):
-        self.queryHandlers[key] = func
+                    m = re.compile("^([^#,]+)(,([^#,]*))?$").match(func.__doc__)
+                    self.updHandler(m[1], m[3], func)
+    def updHandler(self, fi, se, func):
+        print(fi,se,func.__doc__)
+        if fi not in self.queryHandlers:
+            self.queryHandlers[fi] = {}
+        if se:
+            self.queryHandlers[fi][se] = func
+        else:
+            self.queryHandlers[fi]["AnySeType"] = func
     def handle(data):
         pass
     def run_once(self):
         try:
             data = self.conn.recv(1024)
             if data == b'+':
-                return True
-            data = decode(data)
-            if not data:
-                raise Exception("rsp init data not recv")
-            # print(f"recv data:{data}")
+               return True
+            fi,se,args = decode(data)
             resp = None
-            if data[0] not in self.queryHandlers:
-                resp = RspDeafultHandlers.Handle_AnyCase(data[0], **data[1])
-            else:
-                resp = self.queryHandlers[data[0]](**data[1])
+            if fi in self.queryHandlers:
+                if se in self.queryHandlers[fi]:
+                    resp = self.queryHandlers[fi][se](args)
+                elif "AnySeType" in self.queryHandlers[fi]:
+                    resp = self.queryHandlers[fi]["AnySeType"](se + args)
+            # print(f"recv data:{data}")
+            if resp is None:
+                resp = RspDeafultHandlers.Handle_AnyCase(fi + se + args)
             self.conn.sendall(encode(resp))
         except Exception as e:
             traceback.print_exc()

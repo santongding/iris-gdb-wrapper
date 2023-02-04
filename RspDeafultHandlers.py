@@ -1,13 +1,14 @@
-def Handle_AnyCase(t ,**kwargs):
-    dic = {"vMustReplyEmpty", "Hg0", "qTStatus", "qfThreadInfo", "qL", "Hc-1", "qC"} 
-    for v in dic:
-        if t.startswith(v):
-            return {}
+import utils
+def Handle_AnyCase(t):
+    dic = {"vMustReplyEmpty", "Hg0", "qTStatus", "qfThreadInfo", "qL1200000000000000000", "Hc-1", "qC"} 
+    if t in dic:
+        return ""
     raise Exception(f"{t} not in {dic}")
-def Handle_support(**kwargs):
-    """qSupported"""
-    return {"PacketSize":1024, "hwbreak": True, "QStartNoAckMode": True}
+def Handle_support(args):
+    """q,Supported"""
+    return ";".join([utils.EncodeArgs(k,v) for k, v in {"PacketSize":1024, "hwbreak": True, "QStartNoAckMode": True}.items()])
 
-def Handle_noack(**kwargs):
-    """QStartNoAckMode"""
-    return {"OK":None}
+def Handle_noack(args):
+    """Q,StartNoAckMode"""
+    return "OK"
+
