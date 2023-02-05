@@ -10,15 +10,15 @@ def calcChecksum(data):
     return "{:02x}".format(sum(ord(c) for c in data) & 0xff)
 def encode(data):
     ret = str(data)
-    ret = str.encode("+$" + ret + "#" + str(calcChecksum(ret)))
-    print(f"sending:{ret}")
-    return ret
+    ret = "+$" + ret + "#" + str(calcChecksum(ret))
+    print(f"->: {ret}")
+    return str.encode(ret)
 
 def decode(bytes):
     if not bytes:
         raise "not recv data"
-    print(f"raw data:{bytes}")
     data = bytes.decode('utf-8')
+    print(f"<-: {data}")
     m = re.compile("^\+?\$([a-zA-Z?])([a-zA-Z]*)([^#]*)#([0-9a-zA-Z]{2})$").match(data)
     
     if not m:
@@ -27,7 +27,7 @@ def decode(bytes):
     firestType = m[1]
     secondType = m[2]
     args = m[3]
-    print(f"fi type: {firestType}, se type: {secondType} args: {args}")
+    # print(f"fi type: {firestType}, se type: {secondType} args: {args}")
     
     checksum = m[4]
    
@@ -56,7 +56,7 @@ class RspServer:
                     m = re.compile("^([^#,]+)(,([^#,]*))?$").match(func.__doc__)
                     self.updHandler(m[1], m[3], func)
     def updHandler(self, fi, se, func):
-        print(fi,se,func.__doc__)
+        # print(fi,se,func.__doc__)
         if fi not in self.queryHandlers:
             self.queryHandlers[fi] = {}
         if se:
