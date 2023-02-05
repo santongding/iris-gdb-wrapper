@@ -3,7 +3,8 @@ import traceback
 import sys
 import RspDeafultHandlers
 import re
-
+def print(*args):
+    pass
 
 def calcChecksum(data):
     return "{:02x}".format(sum(ord(c) for c in data) & 0xff)

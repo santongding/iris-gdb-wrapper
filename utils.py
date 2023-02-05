@@ -16,10 +16,10 @@ def DecodeArgs(str:str):
         v = str.split("=")
         return {v[0]:v[1]}
     raise Exception(f"unkown args format:{str}")
-def int2str(v:int, bits:int):
+def int2str(v:int, bsize:int):
     ret = ""
     # print("convert {:016x}".format(v))
-    for i in range(0, bits):
+    for i in range(0, bsize):
         ret += "{:02x}".format(255 & v)
         v = v >> 8
     return ret

@@ -2,3 +2,4 @@ set confirm off
 set architecture aarch64
 symbol-file <sym-file> -o <offset>
 target remote localhost:2333
+break image_entry
